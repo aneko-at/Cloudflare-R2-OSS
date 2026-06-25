@@ -53,7 +53,7 @@ export function useTurnstile() {
       'expired-callback': () => {
         setTurnstileToken('');
       },
-      theme: 'dark',
+      theme: 'light',
     });
   }, [setTurnstileToken, setShowTurnstile]);
 
