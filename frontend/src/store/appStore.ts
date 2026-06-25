@@ -32,6 +32,10 @@ interface AppState {
   // 刷新
   refreshKey: number;
   triggerRefresh: () => void;
+
+  // Access Code 模态框
+  showAccessCode: boolean;
+  setShowAccessCode: (val: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -60,4 +64,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   refreshKey: 0,
   triggerRefresh: () => set((s) => ({ refreshKey: s.refreshKey + 1 })),
+
+  showAccessCode: false,
+  setShowAccessCode: (showAccessCode) => set({ showAccessCode }),
 }));

@@ -18,26 +18,36 @@ export function PreviewModal({ fileKey, onClose }: PreviewModalProps) {
   const isText = ['txt', 'md', 'json', 'xml', 'yaml', 'yml', 'csv', 'log', 'env', 'js', 'ts', 'jsx', 'tsx', 'html', 'css', 'py', 'vue', 'sql'].includes(ext.toLowerCase());
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
         setLoading(true);
+        setError(null);
         const previewUrl = await getPreviewUrl(fileKey);
+        if (cancelled) {
+          URL.revokeObjectURL(previewUrl);
+          return;
+        }
         if (isText) {
           const res = await fetch(previewUrl);
           const text = await res.text();
-          setTextContent(text);
+          if (!cancelled) setTextContent(text);
           URL.revokeObjectURL(previewUrl);
         } else {
-          setUrl(previewUrl);
+          if (!cancelled) setUrl(previewUrl);
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : '预览失败');
+        if (!cancelled) setError(e instanceof Error ? e.message : '预览失败');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
-  }, [fileKey]);
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [fileKey, isImage, isText]);
 
   const fileName = fileKey.split('/').pop() || fileKey;
 

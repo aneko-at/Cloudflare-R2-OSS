@@ -11,6 +11,7 @@ export function Toolbar({ onUpload, onNewFolder, onRefresh }: ToolbarProps) {
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const setIsAuthenticated = useAppStore((s) => s.setIsAuthenticated);
   const setAccessCode = useAppStore((s) => s.setAccessCode);
+  const setShowAccessCode = useAppStore((s) => s.setShowAccessCode);
   const uploading = useAppStore((s) => s.uploading);
 
   const btnGlass =
@@ -58,10 +59,7 @@ export function Toolbar({ onUpload, onNewFolder, onRefresh }: ToolbarProps) {
           </button>
         ) : (
           <button
-            onClick={() => {
-              const modal = document.getElementById('access-code-modal');
-              if (modal) modal.style.display = 'flex';
-            }}
+            onClick={() => setShowAccessCode(true)}
             className={`${btnGlass} text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/80`}
           >
             <LogIn size={15} />

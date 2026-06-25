@@ -3,7 +3,12 @@ import { Key, X } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { verifyAccessCodeApi } from '../utils/api';
 
-export function AccessCodeModal() {
+interface AccessCodeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function AccessCodeModal({ isOpen, onClose }: AccessCodeModalProps) {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [verifying, setVerifying] = useState(false);
@@ -22,7 +27,9 @@ export function AccessCodeModal() {
       if (result.valid) {
         setAccessCode(code.trim());
         setIsAuthenticated(true);
-        closeModal();
+        onClose();
+        setCode('');
+        setError('');
       } else {
         setError('访问码错误');
       }
@@ -33,18 +40,18 @@ export function AccessCodeModal() {
     }
   };
 
-  const closeModal = () => {
-    const modal = document.getElementById('access-code-modal');
-    if (modal) modal.style.display = 'none';
+  const handleClose = () => {
     setCode('');
     setError('');
+    onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div
-      id="access-code-modal"
-      className="fixed inset-0 z-50 items-center justify-center bg-black/20 backdrop-blur-sm hidden"
-      onClick={closeModal}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
+      onClick={handleClose}
     >
       <div
         className="w-full max-w-sm mx-4 glass-strong rounded-3xl shadow-2xl overflow-hidden"
@@ -53,7 +60,7 @@ export function AccessCodeModal() {
         <div className="flex items-center justify-between px-6 py-5 border-b border-black/5">
           <h3 className="text-base font-semibold text-[#1d1d1f]">管理员登录</h3>
           <button
-            onClick={closeModal}
+            onClick={handleClose}
             className="p-1.5 rounded-xl text-[#aeaeb2] hover:text-[#1d1d1f] hover:bg-black/5 transition-colors"
           >
             <X size={18} />
@@ -85,7 +92,7 @@ export function AccessCodeModal() {
 
         <div className="flex justify-end gap-3 px-6 py-5 border-t border-black/5">
           <button
-            onClick={closeModal}
+            onClick={handleClose}
             className="px-5 py-2.5 rounded-xl text-sm text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/5 transition-colors"
           >
             取消

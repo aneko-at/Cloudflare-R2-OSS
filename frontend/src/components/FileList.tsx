@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Folder, File, Download, Trash2, Eye } from 'lucide-react';
 import type { R2ObjectInfo } from '../types';
 import { formatFileSize, formatDate, getDisplayName, getFileExtension, getFileTypeIcon } from '../utils/format';
@@ -25,9 +26,11 @@ export function FileList({ files, onNavigate, onDelete, onPreview, onDownload }:
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const prefix = useAppStore((s) => s.prefix);
 
-  const folders = files.filter((f) => f.isFolder);
-  const regularFiles = files.filter((f) => !f.isFolder);
-  const sorted = [...folders, ...regularFiles];
+  const sorted = useMemo(() => {
+    const folders = files.filter((f) => f.isFolder);
+    const regularFiles = files.filter((f) => !f.isFolder);
+    return [...folders, ...regularFiles];
+  }, [files]);
 
   function getIcon(file: R2ObjectInfo) {
     if (file.isFolder) {

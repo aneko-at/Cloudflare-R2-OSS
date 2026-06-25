@@ -16,10 +16,7 @@ import type { R2ObjectInfo } from '../types';
 export default function Home() {
   const { files, loading, error } = useFiles();
   const [showUpload, setShowUpload] = useState(false);
-  const [showTurnstile, setShowTurnstile] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewFile, setPreviewFile] = useState<R2ObjectInfo | null>(null);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [folderName, setFolderName] = useState('');
 
@@ -30,6 +27,14 @@ export default function Home() {
   const turnstileToken = useAppStore((s) => s.turnstileToken);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const setTurnstileToken = useAppStore((s) => s.setTurnstileToken);
+  const showTurnstile = useAppStore((s) => s.showTurnstile);
+  const setShowTurnstile = useAppStore((s) => s.setShowTurnstile);
+  const showPreview = useAppStore((s) => s.showPreview);
+  const setShowPreview = useAppStore((s) => s.setShowPreview);
+  const previewFile = useAppStore((s) => s.previewFile);
+  const setPreviewFile = useAppStore((s) => s.setPreviewFile);
+  const showAccessCode = useAppStore((s) => s.showAccessCode);
+  const setShowAccessCode = useAppStore((s) => s.setShowAccessCode);
 
   const requireTurnstile = useCallback((action: () => void) => {
     if (turnstileToken) {
@@ -68,7 +73,7 @@ export default function Home() {
   };
 
   const handlePreview = async (file: R2ObjectInfo) => {
-    setPreviewFile(file);
+    setPreviewFile({ key: file.key, url: '' });
     setShowPreview(true);
   };
 
@@ -228,7 +233,10 @@ export default function Home() {
         />
       )}
 
-      <AccessCodeModal />
+      <AccessCodeModal
+        isOpen={showAccessCode}
+        onClose={() => setShowAccessCode(false)}
+      />
     </div>
   );
 }
