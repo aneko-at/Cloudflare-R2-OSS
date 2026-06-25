@@ -8,7 +8,6 @@ export async function listFiles(
   const opts: R2ListOptions = {
     prefix: prefix || undefined,
     delimiter,
-    include: ['httpMetadata', 'customMetadata'],
   };
 
   const objects = await bucket.list(opts);

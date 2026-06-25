@@ -84,15 +84,18 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     }
   }
 
-  // POST /api/files/upload - 上传文件
+  // POST /api/files/upload - 上传文件（需 Turnstile，管理员登录后免验证）
   if (method === 'POST' && path === '/api/files/upload') {
-    const authResult = await checkAuth(request, env);
-    if (!authResult.passed) return authResult.response;
+    const isAdmin = verifyAccessCode(request.headers.get('X-Access-Code') || '', env.ACCESS_CODE);
+    if (!isAdmin) {
+      const turnstileResult = await verifyTurnstileOnly(request, env);
+      if (!turnstileResult.passed) return turnstileResult.response!;
+    }
 
     try {
       const formData = await request.formData();
       const prefix = formData.get('prefix') as string || '';
-      const files = formData.getAll('files') as File[];
+      const files = formData.getAll('files') as unknown as File[];
 
       if (!files || files.length === 0) {
         return jsonResponse({ success: false, error: 'No files provided' }, 400);
@@ -112,10 +115,11 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     }
   }
 
-  // DELETE /api/files/delete - 删除文件
+  // DELETE /api/files/delete - 删除文件（仅管理员，免 Turnstile）
   if (method === 'DELETE' && path === '/api/files/delete') {
-    const authResult = await checkAuth(request, env);
-    if (!authResult.passed) return authResult.response;
+    if (!verifyAccessCode(request.headers.get('X-Access-Code') || '', env.ACCESS_CODE)) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+    }
 
     const key = url.searchParams.get('key');
     if (!key) {
@@ -123,7 +127,6 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     }
 
     try {
-      // 判断是否为文件夹
       if (key.endsWith('/')) {
         await deleteFolder(env.R2_BUCKET, key);
       } else {
@@ -135,10 +138,11 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     }
   }
 
-  // POST /api/folders - 创建文件夹
+  // POST /api/folders - 创建文件夹（仅管理员，免 Turnstile）
   if (method === 'POST' && path === '/api/folders') {
-    const authResult = await checkAuth(request, env);
-    if (!authResult.passed) return authResult.response;
+    if (!verifyAccessCode(request.headers.get('X-Access-Code') || '', env.ACCESS_CODE)) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+    }
 
     try {
       const body: { name: string; prefix: string } = await request.json();
@@ -180,32 +184,21 @@ interface AuthCheckResult {
   response?: Response;
 }
 
-async function checkAuth(request: Request, env: Env): Promise<AuthCheckResult> {
-  const accessCode = request.headers.get('X-Access-Code') || '';
-  const turnstileToken = request.headers.get('X-Turnstile-Token') || '';
-
-  if (!verifyAccessCode(accessCode, env.ACCESS_CODE)) {
-    return {
-      passed: false,
-      response: jsonResponse({ success: false, error: 'Invalid access code' }, 401),
-    };
-  }
-
-  if (!turnstileToken) {
+async function verifyTurnstileOnly(request: Request, env: Env): Promise<AuthCheckResult> {
+  const token = request.headers.get('X-Turnstile-Token') || '';
+  if (!token) {
     return {
       passed: false,
       response: jsonResponse({ success: false, error: 'Missing Turnstile token' }, 400),
     };
   }
-
-  const turnstileValid = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY);
-  if (!turnstileValid) {
+  const valid = await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY);
+  if (!valid) {
     return {
       passed: false,
       response: jsonResponse({ success: false, error: 'Turnstile verification failed' }, 403),
     };
   }
-
   return { passed: true };
 }
 

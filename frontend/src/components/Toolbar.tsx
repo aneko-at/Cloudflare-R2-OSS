@@ -21,7 +21,7 @@ export function Toolbar({ onUpload, onNewFolder, onRefresh }: ToolbarProps) {
     <div className="flex items-center gap-2 flex-wrap">
       <button
         onClick={onUpload}
-        disabled={!isAuthenticated || uploading}
+        disabled={uploading}
         className={`${btnGlass} text-[#1d1d1f] hover:bg-white/80 hover:shadow-md`}
       >
         <Upload size={15} />

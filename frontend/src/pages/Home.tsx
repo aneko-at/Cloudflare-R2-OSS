@@ -37,13 +37,18 @@ export default function Home() {
   const setShowAccessCode = useAppStore((s) => s.setShowAccessCode);
 
   const requireTurnstile = useCallback((action: () => void) => {
+    // 管理员登录后跳过 Turnstile
+    if (isAuthenticated) {
+      action();
+      return;
+    }
     if (turnstileToken) {
       action();
     } else {
       setPendingAction(() => action);
       setShowTurnstile(true);
     }
-  }, [turnstileToken]);
+  }, [isAuthenticated, turnstileToken]);
 
   const handleTurnstileSuccess = useCallback((token: string) => {
     setTurnstileToken(token);
@@ -61,15 +66,19 @@ export default function Home() {
   };
 
   const handleDelete = (file: R2ObjectInfo) => {
+    if (!isAuthenticated) {
+      alert('请先登录管理员账号');
+      return;
+    }
     if (!confirm(`确定要删除 "${file.key}" 吗？${file.isFolder ? '这将删除文件夹内所有文件。' : ''}`)) return;
-    requireTurnstile(async () => {
+    (async () => {
       try {
-        await deleteFileApi(file.key, accessCode, turnstileToken);
+        await deleteFileApi(file.key, accessCode, '');
         triggerRefresh();
       } catch (e) {
         alert(e instanceof Error ? e.message : '删除失败');
       }
-    });
+    })();
   };
 
   const handlePreview = async (file: R2ObjectInfo) => {
@@ -86,6 +95,10 @@ export default function Home() {
   };
 
   const handleNewFolder = async () => {
+    if (!isAuthenticated) {
+      alert('请先登录管理员账号');
+      return;
+    }
     if (!showNewFolder) {
       setShowNewFolder(true);
       setFolderName('');
@@ -95,23 +108,17 @@ export default function Home() {
       alert('请输入文件夹名称');
       return;
     }
-    requireTurnstile(async () => {
-      try {
-        await createFolder(folderName.trim(), prefix, accessCode, turnstileToken);
-        setShowNewFolder(false);
-        setFolderName('');
-        triggerRefresh();
-      } catch (e) {
-        alert(e instanceof Error ? e.message : '创建文件夹失败');
-      }
-    });
+    try {
+      await createFolder(folderName.trim(), prefix, accessCode, '');
+      setShowNewFolder(false);
+      setFolderName('');
+      triggerRefresh();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '创建文件夹失败');
+    }
   };
 
   const handleUpload = () => {
-    if (!isAuthenticated) {
-      alert('请先登录管理员账号');
-      return;
-    }
     requireTurnstile(() => {
       setShowUpload(true);
     });
