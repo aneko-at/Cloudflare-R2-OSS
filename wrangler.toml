@@ -1,0 +1,24 @@
+# Cloudflare Workers 名称
+name = "aneko-r2-oss"
+# 入口文件（Worker 代码在 worker/ 目录下）
+main = "worker/src/index.ts"
+# 兼容日期
+compatibility_date = "2024-12-01"
+
+# R2 存储桶绑定
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "disk"  # 替换为你的 R2 桶名称
+
+# 敏感信息通过面板 Variables 设置（加密）
+# 部署后到 Worker 设置 → Variables → 添加：
+#   ACCESS_CODE（加密）→ 管理员访问码
+#   TURNSTILE_SECRET_KEY（加密）→ Turnstile 密钥
+
+# 构建命令（部署前自动构建前端）
+[build]
+command = "cd frontend && npm ci && npm run build"
+
+# 静态资源目录（前端构建产物）
+[assets]
+directory = "frontend/dist"
