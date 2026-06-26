@@ -26,41 +26,38 @@
         └── services/      # R2 操作 + Turnstile 验证
 ```
 
-## 部署（Cloudflare 面板）
+### 前端：Turnstile 站点密钥
 
-### 1. 构建前端
+**文件**：`frontend/src/hooks/useTurnstile.ts`
 
-```bash
-cd frontend
-npm install
-npm run build
+第 22 行，将 `TURNSTILE_SITE_KEY` 替换为你的 Turnstile 站点密钥（Site Key）：
+
+```ts
+const TURNSTILE_SITE_KEY = '0x4AAAAAXXXXX'; // 改为你的站点密钥
 ```
 
-### 2. 创建 Worker
+> 在 Cloudflare Turnstile 控制台创建站点后可获取。
 
-1. 打开 [Cloudflare Dashboard](https://dash.cloudflare.com) → Workers & Pages → 创建
-2. 选择 "创建 Worker"
-3. 将 `worker/src/index.ts` 和 `worker/src/services/` 下的代码粘贴到在线编辑器
-4. 点击 "部署"
+### Worker 配置：R2 存储桶绑定
 
-### 3. 绑定 R2 存储桶
+**文件**：`wrangler.toml`
 
-进入 Worker 设置 → R2 存储桶绑定：
-- 变量名：`R2_BUCKET`
-- 选择你的 R2 存储桶
+将 `[[r2_buckets]]` 中的 `bucket_name` 改为你的 R2 存储桶名称：
 
-### 4. 设置密钥
+```toml
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "your-bucket-name"  # 改为你的存储桶名称
+```
 
-进入 Worker 设置 → Variables → 添加：
-- `ACCESS_CODE`（加密）→ 你的管理员访问码
-- `TURNSTILE_SECRET_KEY`（加密）→ 你的 Turnstile 密钥
+### 环境变量
 
-### 5. 上传前端静态资源
+部署后添加环境变量：
 
-1. 进入 Worker 设置 → 静态资源
-2. 上传 `frontend/dist/` 目录下的所有文件
-3. 重新部署
+| 变量名 | 说明 | 加密 |
+|---|---|---|
+| `ACCESS_CODE` | 管理员登录访问码 | 建议加密 |
+| `TURNSTILE_SECRET_KEY` | Turnstile 密钥（Secret Key） | 建议加密 |
 
-### 6. 配置前端
 
-部署前修改 `frontend/src/hooks/useTurnstile.ts` 中的 `TURNSTILE_SITE_KEY` 为你的 Turnstile 站点密钥，然后重新构建前端。
+
