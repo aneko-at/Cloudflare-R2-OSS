@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
 
 declare global {
@@ -24,6 +24,7 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAADVWOfZ_ZQMCjDQO';
 export function useTurnstile() {
   const setShowTurnstile = useAppStore((s) => s.setShowTurnstile);
   const setTurnstileToken = useAppStore((s) => s.setTurnstileToken);
+  const widgetIdRef = useRef<string>('');
 
   const loadTurnstileScript = useCallback(() => {
     if (document.querySelector('script[src*="turnstile"]')) return;
@@ -40,10 +41,18 @@ export function useTurnstile() {
       return;
     }
 
+    // 移除旧 widget 避免重复渲染
+    if (widgetIdRef.current) {
+      window.turnstile.remove(widgetIdRef.current);
+    }
+
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    window.turnstile.render(`#${containerId}`, {
+    // 清空容器（移除旧 iframe）
+    container.innerHTML = '';
+
+    widgetIdRef.current = window.turnstile.render(`#${containerId}`, {
       sitekey: TURNSTILE_SITE_KEY,
       callback: (token: string) => {
         setTurnstileToken(token);
@@ -57,5 +66,12 @@ export function useTurnstile() {
     });
   }, [setTurnstileToken, setShowTurnstile]);
 
-  return { loadTurnstileScript, renderTurnstile };
+  const removeTurnstile = useCallback(() => {
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.remove(widgetIdRef.current);
+      widgetIdRef.current = '';
+    }
+  }, []);
+
+  return { loadTurnstileScript, renderTurnstile, removeTurnstile };
 }

@@ -8,15 +8,18 @@ interface TurnstileModalProps {
 }
 
 export function TurnstileModal({ onSuccess, onClose }: TurnstileModalProps) {
-  const { loadTurnstileScript, renderTurnstile } = useTurnstile();
+  const { loadTurnstileScript, renderTurnstile, removeTurnstile } = useTurnstile();
 
   useEffect(() => {
     loadTurnstileScript();
     const timer = setTimeout(() => {
       renderTurnstile('turnstile-container', onSuccess);
     }, 300);
-    return () => clearTimeout(timer);
-  }, [loadTurnstileScript, renderTurnstile, onSuccess]);
+    return () => {
+      clearTimeout(timer);
+      removeTurnstile();
+    };
+  }, [loadTurnstileScript, renderTurnstile, removeTurnstile, onSuccess]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
